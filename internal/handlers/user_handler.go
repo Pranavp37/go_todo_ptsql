@@ -1,0 +1,46 @@
+package handlers
+
+import (
+	"net/http"
+
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/labstack/echo/v4"
+	"github.com/pranavp37/go_todo_ptsql/internal/models"
+	"github.com/pranavp37/go_todo_ptsql/internal/repository"
+	"github.com/pranavp37/go_todo_ptsql/internal/utiles"
+)
+
+func CreateUserHandeler(connpool *pgxpool.Pool) echo.HandlerFunc {
+
+	return func(c echo.Context) error {
+		var user models.User
+		if err := c.Bind(&user); err != nil {
+			return c.JSON(http.StatusBadRequest, utiles.Response{
+				Success: false,
+				Message: "Invalid input",
+			})
+		}
+
+		var userModel = &models.User{
+			ID:        user.ID,
+			Name:      user.Name,
+			Email:     user.Email,
+			Password:  user.Password,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		}
+
+		err := repository.CreateUser(connpool, userModel)
+		if err != nil {
+			return c.JSON(http.StatusInternalServerError, utiles.Response{
+				Success: false,
+				Message: "Failed to create user",
+			})
+		}
+
+		return c.JSON(http.StatusCreated, utiles.Response{
+			Success: true,
+			Message: "User created successfully",
+		})
+	}
+}
