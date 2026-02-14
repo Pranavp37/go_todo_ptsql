@@ -6,6 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pranavp37/go_todo_ptsql/internal/config"
 	"github.com/pranavp37/go_todo_ptsql/internal/database"
+	"github.com/pranavp37/go_todo_ptsql/internal/handlers"
 )
 
 func main() {
@@ -17,7 +18,7 @@ func main() {
 		log.Fatal("Failed to load configuration:", err)
 	}
 
-	_, err = database.Connect(cfg.DATABASE_URL)
+	connpool, err := database.Connect(cfg.DATABASE_URL)
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
@@ -26,6 +27,9 @@ func main() {
 		return c.String(200, "hello world...")
 	})
 
-	c.Start(":8080")
+	c.POST("/create", handlers.CreateUserHandeler(connpool))
+	c.POST("/login", handlers.LoginUserHandeler(connpool))
+
+	c.Logger.Fatal(c.Start(":8080"))
 
 }

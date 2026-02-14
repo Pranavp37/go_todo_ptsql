@@ -8,12 +8,13 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/pranavp37/go_todo_ptsql/internal/models"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func CreateUser(connpool *pgxpool.Pool, user *models.User) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	isExisting, err := GetUserByEmail(connpool, user.Email)
+	isExisting, err := IsEmailRegistered(connpool, user.Email)
 	if err != nil {
 		log.Print("Error checking if user exists: ", err)
 		return err
@@ -22,10 +23,17 @@ func CreateUser(connpool *pgxpool.Pool, user *models.User) error {
 		log.Print("User already exists: ", user.Email)
 		return fmt.Errorf("user already exists")
 	}
-	
-	query := `INSERT INTO users (id,name,email,password,created_at,updated_at) VALUES ($1,$2,$3,$4,$5,$6)`
 
-	_, err = connpool.Exec(ctx, query, user.ID, user.Name, user.Email, user.Password, user.CreatedAt, user.UpdatedAt)
+	hashpass, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+
+	if err != nil {
+		log.Print("Error hashing password: ", err)
+		return err
+	}
+
+	query := `INSERT INTO users (name,email,password) VALUES ($1,$2,$3)`
+
+	_, err = connpool.Exec(ctx, query, user.Name, user.Email, hashpass)
 	if err != nil {
 		log.Print("Error creating user: ", err)
 		return err
@@ -33,7 +41,7 @@ func CreateUser(connpool *pgxpool.Pool, user *models.User) error {
 	return nil
 }
 
-func GetUserByEmail(connpool *pgxpool.Pool, email string) (bool, error) {
+func IsEmailRegistered(connpool *pgxpool.Pool, email string) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	query := `SELECT email FROM users WHERE email = $1`
@@ -47,4 +55,29 @@ func GetUserByEmail(connpool *pgxpool.Pool, email string) (bool, error) {
 		return false, err
 	}
 	return true, nil
+}
+
+func LoginUser(connpool *pgxpool.Pool, user *models.User) (*models.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	var userModel models.User
+	query := `SELECT id, name, email, password FROM users WHERE email = $1`
+	row := connpool.QueryRow(ctx, query, user.Email)
+	err := row.Scan(&userModel.ID, &userModel.Name, &userModel.Email, &userModel.Password)
+	if err != nil {
+		if err.Error() == "no rows in result set" {
+			return nil, fmt.Errorf("invalid email or password")
+		}
+		return nil, err
+	}
+	err = bcrypt.CompareHashAndPassword([]byte(userModel.Password), []byte(user.Password))
+	if err != nil {
+		return nil, fmt.Errorf("invalid email or password")
+	}
+	var userResponse *models.User = &models.User{
+		ID:    userModel.ID,
+		Name:  userModel.Name,
+		Email: userModel.Email,
+	}
+	return userResponse, nil
 }

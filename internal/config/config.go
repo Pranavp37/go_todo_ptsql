@@ -24,12 +24,12 @@ func Load() (*config, error) {
 	}
 
 	var config *config = &config{
-		DATABASE_NAME:     os.Getenv("DATABSE_NAME"),
-		DATABASE_USER:     os.Getenv("DATABSE_USER"),
-		DATABASE_PASSWORD: os.Getenv("DATABSE_PASSWORD"),
-		DATABASE_HOST:     os.Getenv("DATABSE_HOST"),
-		DATABASE_PORT:     os.Getenv("DATABSE_PORT"),
-		DATABASE_URL:      os.Getenv("DATABSE_URL"),
+		DATABASE_NAME:     os.Getenv("DATABASE_NAME"),
+		DATABASE_USER:     os.Getenv("DATABASE_USER"),
+		DATABASE_PASSWORD: os.Getenv("DATABASE_PASSWORD"),
+		DATABASE_HOST:     os.Getenv("DATABASE_HOST"),
+		DATABASE_PORT:     os.Getenv("DATABASE_PORT"),
+		DATABASE_URL:      os.Getenv("DATABASE_URL"),
 	}
 	return config, nil
 }
