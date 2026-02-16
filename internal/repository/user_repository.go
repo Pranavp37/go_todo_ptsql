@@ -61,9 +61,9 @@ func LoginUser(connpool *pgxpool.Pool, user *models.User) (*models.User, error) 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	var userModel models.User
-	query := `SELECT id, name, email, password FROM users WHERE email = $1`
+	query := `SELECT id, name, email, password, created_at, updated_at FROM users WHERE email = $1`
 	row := connpool.QueryRow(ctx, query, user.Email)
-	err := row.Scan(&userModel.ID, &userModel.Name, &userModel.Email, &userModel.Password)
+	err := row.Scan(&userModel.ID, &userModel.Name, &userModel.Email, &userModel.Password, &userModel.CreatedAt, &userModel.UpdatedAt)
 	if err != nil {
 		if err.Error() == "no rows in result set" {
 			return nil, fmt.Errorf("invalid email or password")
@@ -72,12 +72,32 @@ func LoginUser(connpool *pgxpool.Pool, user *models.User) (*models.User, error) 
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(userModel.Password), []byte(user.Password))
 	if err != nil {
-		return nil, fmt.Errorf("invalid email or password")
+		return nil, fmt.Errorf("password does not match")
 	}
 	var userResponse *models.User = &models.User{
-		ID:    userModel.ID,
-		Name:  userModel.Name,
-		Email: userModel.Email,
+		ID:        userModel.ID,
+		Name:      userModel.Name,
+		Email:     userModel.Email,
+		CreatedAt: userModel.CreatedAt,
+		UpdatedAt: userModel.UpdatedAt,
 	}
 	return userResponse, nil
+}
+
+func GetUserByID(connpool *pgxpool.Pool, userID string) (*models.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	var userModel models.User
+	query := `SELECT id,email,name,created_at FROM users WHERE id = $1`
+	row := connpool.QueryRow(ctx, query, userID)
+
+	if err := row.Scan(&userModel.ID, &userModel.Email, &userModel.Name, &userModel.CreatedAt); err != nil {
+		if err.Error() == "no rows in result set" {
+			return nil, fmt.Errorf("user not found")
+		}
+		return nil, err
+
+	}
+	return &userModel, nil
+
 }

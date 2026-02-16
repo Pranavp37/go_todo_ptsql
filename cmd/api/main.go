@@ -29,6 +29,11 @@ func main() {
 
 	c.POST("/create", handlers.CreateUserHandeler(connpool))
 	c.POST("/login", handlers.LoginUserHandeler(connpool))
+	c.GET("/user/:id", handlers.GetUserByIdHandeler(connpool))
+	c.POST("/create-todo", handlers.CreateTodorHander(connpool))
+	c.GET("/todos", handlers.GetAllTodoHandeler(connpool))
+	c.PUT("/update-todo/:id", handlers.UpdateTodoHander(connpool))
+	c.DELETE("/delete-todo/:id", handlers.DeleteTodoHandler(connpool))
 
 	c.Logger.Fatal(c.Start(":8080"))
 

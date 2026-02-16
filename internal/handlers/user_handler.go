@@ -78,5 +78,31 @@ func LoginUserHandeler(connpool *pgxpool.Pool) echo.HandlerFunc {
 			Data:    usermodel,
 		})
 	}
+}
 
+func GetUserByIdHandeler(connpool *pgxpool.Pool) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		userId := c.Param("id")
+		user, err := repository.GetUserByID(connpool, userId)
+		if err != nil {
+
+			if err.Error() == "user not found" {
+				return c.JSON(http.StatusNotFound, utiles.Response{
+					Success: false,
+					Message: "User not found",
+				})
+			}
+			log.Print("Error fetching user: ", err)
+			return c.JSON(http.StatusInternalServerError, utiles.Response{
+				Success: false,
+				Message: "Failed to fetch user",
+				Data:    nil,
+			})
+		}
+		return c.JSON(http.StatusOK, utiles.Response{
+			Success: true,
+			Message: "user details fetched successfully",
+			Data:    user,
+		})
+	}
 }
