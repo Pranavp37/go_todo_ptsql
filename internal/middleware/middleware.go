@@ -14,7 +14,36 @@ import (
 )
 
 func RegisterMiddleware(c *echo.Echo) {
-	c.Use(middleware.RequestLogger())
+	c.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogMethod:   true,
+		LogURI:      true,
+		LogStatus:   true,
+		LogLatency:  true,
+		LogError:    true,
+		HandleError: true,
+		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
+			if v.Error != nil {
+				log.Printf(
+					"❌ %s %s → %d (%v) ERROR: %v",
+					v.Method,
+					v.URI,
+					v.Status,
+					v.Latency,
+					v.Error,
+				)
+			} else {
+				log.Printf(
+					"✅ %s %s → %d (%v)",
+					v.Method,
+					v.URI,
+					v.Status,
+					v.Latency,
+				)
+			}
+			return nil
+		},
+	}))
+	// c.Use(middleware.RequestLogger())
 	c.Use(middleware.Recover())
 }
 
