@@ -7,6 +7,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
 
+	"github.com/pranavp37/go_todo_ptsql/internal/middleware"
 	"github.com/pranavp37/go_todo_ptsql/internal/models"
 	"github.com/pranavp37/go_todo_ptsql/internal/repository"
 	"github.com/pranavp37/go_todo_ptsql/internal/utiles"
@@ -80,10 +81,22 @@ func UpdateTodoHander(connpool *pgxpool.Pool) echo.HandlerFunc {
 			})
 		}
 
+		tokens, err := middleware.GenerateAccessandRefershTokens(rtodo.UserID)
+		if err != nil {
+			log.Print("Failed to generate tokens: ", err)
+			return c.JSON(http.StatusInternalServerError, utiles.Response{
+				Success: false,
+				Message: "Failed to generate tokens",
+				Data:    err,
+			})
+
+		}
+
 		return c.JSON(http.StatusOK, utiles.Response{
 			Success: true,
 			Message: "Todo updated successfully",
 			Data:    rtodo,
+			Tokens:  tokens,
 		})
 
 	}

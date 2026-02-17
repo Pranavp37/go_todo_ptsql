@@ -7,6 +7,7 @@ import (
 	"github.com/pranavp37/go_todo_ptsql/internal/config"
 	"github.com/pranavp37/go_todo_ptsql/internal/database"
 	"github.com/pranavp37/go_todo_ptsql/internal/handlers"
+	"github.com/pranavp37/go_todo_ptsql/internal/middleware"
 )
 
 func main() {
@@ -29,11 +30,15 @@ func main() {
 
 	c.POST("/create", handlers.CreateUserHandeler(connpool))
 	c.POST("/login", handlers.LoginUserHandeler(connpool))
-	c.GET("/user/:id", handlers.GetUserByIdHandeler(connpool))
-	c.POST("/create-todo", handlers.CreateTodorHander(connpool))
-	c.GET("/todos", handlers.GetAllTodoHandeler(connpool))
-	c.PUT("/update-todo/:id", handlers.UpdateTodoHander(connpool))
-	c.DELETE("/delete-todo/:id", handlers.DeleteTodoHandler(connpool))
+
+	middleware.RegisterMiddleware(c)
+	protected := c.Group("", middleware.AuthJwtMiddleware())
+
+	protected.GET("/user/:id", handlers.GetUserByIdHandeler(connpool))
+	protected.POST("/create-todo", handlers.CreateTodorHander(connpool))
+	protected.GET("/todos", handlers.GetAllTodoHandeler(connpool))
+	protected.PUT("/update-todo/:id", handlers.UpdateTodoHander(connpool))
+	protected.DELETE("/delete-todo/:id", handlers.DeleteTodoHandler(connpool))
 
 	c.Logger.Fatal(c.Start(":8080"))
 

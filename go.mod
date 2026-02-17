@@ -4,7 +4,10 @@ go 1.24.3
 
 require github.com/joho/godotenv v1.5.1
 
+require golang.org/x/time v0.14.0 // indirect
+
 require (
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect

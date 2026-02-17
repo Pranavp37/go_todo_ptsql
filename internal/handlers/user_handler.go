@@ -6,6 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/labstack/echo/v4"
+	"github.com/pranavp37/go_todo_ptsql/internal/middleware"
 	"github.com/pranavp37/go_todo_ptsql/internal/models"
 	"github.com/pranavp37/go_todo_ptsql/internal/repository"
 	"github.com/pranavp37/go_todo_ptsql/internal/utiles"
@@ -44,10 +45,20 @@ func CreateUserHandeler(connpool *pgxpool.Pool) echo.HandlerFunc {
 				Message: "Failed to create user",
 			})
 		}
+		tokens, err := middleware.GenerateAccessandRefershTokens(user.ID)
+		if err != nil {
+			log.Print("Failed to generate tokens: ", err)
+			return c.JSON(http.StatusInternalServerError, utiles.Response{
+				Success: false,
+				Message: "Failed to generate tokens",
+				Data:    err,
+			})
+		}
 
 		return c.JSON(http.StatusCreated, utiles.Response{
 			Success: true,
 			Message: "User created successfully",
+			Data:    tokens,
 		})
 	}
 }
@@ -99,6 +110,7 @@ func GetUserByIdHandeler(connpool *pgxpool.Pool) echo.HandlerFunc {
 				Data:    nil,
 			})
 		}
+
 		return c.JSON(http.StatusOK, utiles.Response{
 			Success: true,
 			Message: "user details fetched successfully",
